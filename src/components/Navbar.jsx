@@ -8,11 +8,11 @@ const Navbar = () => {
 
   return (
     <div className='navbar'>
-      <span className="logo">ChatOn</span>
+      <span className="logo">Chat Tube </span>
       <div className="user">
         <img src={currentUser.photoURL} alt="" />
         <span>{currentUser.displayName}</span>
-        <button onClick={()=>signOut(auth)}>logout</button>
+        <button onClick={()=>signOut(auth)} style={{borderRadius:'10px', padding: '6px'}}>logout</button>
       </div>
     </div>
   )
