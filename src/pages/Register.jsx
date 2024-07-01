@@ -81,7 +81,7 @@ console.log("user created");
           {err && <span>Something went wrong</span>}
         </form>
         <p>
-          You do have an account? <Link to="/Login">Login</Link>
+          You do have an account? <Link to="/Login" style={{textDecoration:'none'}}>Login</Link>
         </p>
       </div>
     </div>
