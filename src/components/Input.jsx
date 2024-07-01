@@ -24,18 +24,21 @@ const Input = () => {
   const handleSend = async () => {
     if (img) {
       const storageRef = ref(storage, uuid());
-
-      const uploadTask = uploadBytesResumable (storageRef, img);
-
-     uploadTask.on (
+  
+      const uploadTask = uploadBytesResumable(storageRef, img);
+  
+      uploadTask.on(
         'state_changed',
-        (error) => {
-          //TODO:Handle Error
-          console.log("file upload error", error);
-          // setErr(true);
+        (snapshot) => {
+          // You can add progress indication here if needed
         },
-       () => {
-       getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
+        (error) => {
+          // Handle error
+          console.error("File upload error:", error);
+        },
+        async () => {
+          try {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
             await updateDoc(doc(db, "chats", data.chatId), {
               messages: arrayUnion({
                 id: uuid(),
@@ -45,37 +48,54 @@ const Input = () => {
                 img: downloadURL,
               }),
             });
-          });
+            await updateDoc(doc(db, "userChats", currentUser.uid), {
+              [data.chatId + ".lastMessage"]: {
+                text,
+              },
+              [data.chatId + ".date"]: serverTimestamp(),
+            });
+            await updateDoc(doc(db, "userChats", data.user.uid), {
+              [data.chatId + ".lastMessage"]: {
+                text,
+              },
+              [data.chatId + ".date"]: serverTimestamp(),
+            });
+            setText("");
+            setImg(null);
+          } catch (error) {
+            console.error("Error updating document:", error);
+          }
         }
       );
     } else {
-      await updateDoc(doc(db, "chats", data.chatId), {
-        messages: arrayUnion({
-          id: uuid(),
-          text,
-          senderId: currentUser.uid,
-          date: Timestamp.now(),
-        }),
-      });
+      try {
+        await updateDoc(doc(db, "chats", data.chatId), {
+          messages: arrayUnion({
+            id: uuid(),
+            text,
+            senderId: currentUser.uid,
+            date: Timestamp.now(),
+          }),
+        });
+        await updateDoc(doc(db, "userChats", currentUser.uid), {
+          [data.chatId + ".lastMessage"]: {
+            text,
+          },
+          [data.chatId + ".date"]: serverTimestamp(),
+        });
+        await updateDoc(doc(db, "userChats", data.user.uid), {
+          [data.chatId + ".lastMessage"]: {
+            text,
+          },
+          [data.chatId + ".date"]: serverTimestamp(),
+        });
+        setText("");
+      } catch (error) {
+        console.error("Error updating document:", error);
+      }
     }
-
-    await updateDoc(doc(db, "userChats", currentUser.uid), {
-      [data.chatId + ".lastMessage"]: {
-        text,
-      },
-      [data.chatId + ".date"]: serverTimestamp(),
-    });
-
-    await updateDoc(doc(db, "userChats", data.user.uid), {
-      [data.chatId + ".lastMessage"]: {
-        text,
-      },
-      [data.chatId + ".date"]: serverTimestamp(),
-    });
-
-    setText("");
-    setImg(null);
   };
+  
 
 
 
